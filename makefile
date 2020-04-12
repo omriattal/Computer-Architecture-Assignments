@@ -1,12 +1,29 @@
-all: main_task1Assignment1
+CC		:=	gcc -m32
+CC_FLAGS	:=	-Wall -g
+ASM		:=	nasm
+ASM_FLAGS	:=	-f elf -g
+LINK		:=	ld
 
-main_task1Assignment1: main_task1Assignment1.o
-	gcc -g -m32 -Wall -o  main_task1Assignment1 main_task1Assignment1.o 
+SRC_DIR		:=	src
+OBJ_DIR		:=	obj
+LIST_DIR	:=	list
+BIN_DIR		:=	bin
 
-main_task1Assignment1.o: main_task1Assignment1.c
-	gcc -g -m32 -Wall -c -o main_task1Assignment1.o main_task1Assignment1.c 
+all: task1 # task2
 
-.PHONY: clean
+task1:	$(OBJ_DIR)/main_task1Assignment1.o $(OBJ_DIR)/asm_task1Assignment1.o
+	$(CC) -o $(BIN_DIR)/task1.bin $(OBJ_DIR)/main_task1Assignment1.o $(OBJ_DIR)/asm_task1Assignment1.o
 
-clean: 
-	rm -f *.o main_task1Assignment1
+# task2:
+# add your makefile code here...
+# uncomment task2 in section 'all'	
+# .c/.s compile rules
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
+	$(CC) -c $(CC_FLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.s
+	$(ASM) $(ASM_FLAGS) $< -o $@ -l $(subst .o,.lst,$(subst $(OBJ_DIR),$(LIST_DIR),$@))
+
+clean:
+	rm $(BIN_DIR)/*.bin $(OBJ_DIR)/*.o $(LIST_DIR)/*.lst
+
