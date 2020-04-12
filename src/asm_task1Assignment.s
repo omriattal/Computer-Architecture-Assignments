@@ -1,7 +1,9 @@
 extern c_checkValidity
 extern printf
+
 section .data
     format: db '%d' , 10, 0
+
 section .text
 assFunc:
     push ebp
@@ -19,6 +21,8 @@ assFunc:
     add esp,12
     popfd
     popad
+    mov esp, ebp
+    pop ebp 
     
 
 
