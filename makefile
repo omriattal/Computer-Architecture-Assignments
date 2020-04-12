@@ -4,24 +4,22 @@ ASM		:=	nasm
 ASM_FLAGS	:=	-f elf -g
 LINK		:=	ld
 
-# SRC_DIR		:=	src
-# OBJ_DIR		:=	obj
-# LIST_DIR	:=	list
-# BIN_DIR		:=	bin
-
-SRC_DIR		:=	.
-OBJ_DIR		:=	.
-LIST_DIR	:=	.
-BIN_DIR		:=	.
+SRC_DIR		:=	src
+OBJ_DIR		:=	obj
+LIST_DIR	:=	list
+BIN_DIR		:=	bin
 
 all: task1 # task2
 
-task1:	$(OBJ_DIR)/main1.o $(OBJ_DIR)/task1.o
-	$(CC) -o $(BIN_DIR)/task1.bin $(OBJ_DIR)/main1.o $(OBJ_DIR)/task1.o
+task1:	$(OBJ_DIR)/main_task1Assignment1.o $(OBJ_DIR)/asm_task1Assignment1.o
+	$(CC) -o $(BIN_DIR)/task1.bin $(OBJ_DIR)/main_task1Assignment1.o $(OBJ_DIR)/asm_task1Assignment1.o
 
 # task2:
 # add your makefile code here...
-# uncomment task2 in section 'all'	
+# uncomment task2 in section 'all'
+
+
+
 # .c/.s compile rules
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CC_FLAGS) $< -o $@
