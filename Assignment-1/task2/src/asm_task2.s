@@ -1,10 +1,10 @@
 section	.rodata			; we define (global) read-only variables in .rodata section
-	format_string: db "%s", 10, 0
+	format: db "%s", 10, 0
 	format_integer: db "%d",10,0	; format string
-
 section .bss			; we define (global) uninitialized variables in .bss section
 	an: resb 12		; enough to store integer in [-2,147,483,648 (-2^31) : 2,147,483,647 (2^31-1)]
- 
+	tmp: resb 12
+	
 
 section .text
 	global convertor
@@ -21,7 +21,7 @@ convertor:
 	mov eax,0
 	getting_number:
 		cmp byte [ecx+ebx],10 ;checks if the char is a newline
-		je continue_with_number
+		je cotinue_to_convert_to_hexa_char
 		sub byte [ecx+ebx] , 48
 		mul dword [ebp-4]
 		mov edx,0
@@ -30,14 +30,37 @@ convertor:
 		inc ebx
 		jmp getting_number
 
-	continue_with_number:
-	mov [an],eax
-	push dword [an]	; call printf with 2 arguments -  
-	push format_integer	; pointer to str and pointer to format string
-	call printf
-	add esp, 8		; clean up stack after call
+	cotinue_to_convert_to_hexa_char:
+		mov ebx,0
+		mov dword [ebp-4],16
 
-	popad			
-	mov esp, ebp	
-	pop ebp
-	ret
+	convert_to_hexa_char: ; now eax stores the decimal number
+		cmp eax,0
+		je continue
+		mov edx,0
+		div dword [ebp-4]
+		cmp edx, 9
+		jle convert_to_char_0_9
+		convert_to_char_A_F:
+			add dl,55
+			mov byte [an + ebx],dl
+			inc ebx
+			jmp convert_to_hexa_char
+
+		convert_to_char_0_9:
+			add dl,48
+			mov byte [an + ebx], dl
+			inc ebx
+			jmp convert_to_hexa_char
+
+
+
+	continue:
+		mov byte [an + 12], 0 
+		push dword format
+		call printf
+		add esp, 8		; clean up stack after call
+		popad			
+		mov esp, ebp	
+		pop ebp
+		ret

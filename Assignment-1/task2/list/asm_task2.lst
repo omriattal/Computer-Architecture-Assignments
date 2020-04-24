@@ -1,0 +1,65 @@
+     1                                  section	.rodata			; we define (global) read-only variables in .rodata section
+     2 00000000 25730A00                	format: db "%s", 10, 0
+     3 00000004 25640A00                	format_integer: db "%d",10,0	; format string
+     4                                  section .bss			; we define (global) uninitialized variables in .bss section
+     5 00000000 <res 0000000C>          	an: resb 12		; enough to store integer in [-2,147,483,648 (-2^31) : 2,147,483,647 (2^31-1)]
+     6                                  	
+     7                                  
+     8                                  section .text
+     9                                  	global convertor
+    10                                  	extern printf
+    11                                  
+    12                                  convertor:
+    13 00000000 55                      	push ebp
+    14 00000001 89E5                    	mov ebp, esp
+    15 00000003 83EC04                  	sub esp , 4
+    16 00000006 C745FC0A000000          	mov dword [ebp - 4], 10
+    17 0000000D 60                      	pushad			
+    18 0000000E 8B4D08                  	mov ecx, dword [ebp+8]	; get function argument (pointer to string)
+    19 00000011 BB00000000              	mov ebx,0 
+    20 00000016 B800000000              	mov eax,0
+    21                                  	getting_number:
+    22 0000001B 803C190A                		cmp byte [ecx+ebx],10 ;checks if the char is a newline
+    23 0000001F 7414                    		je cotinue_to_convert_to_hexa_char
+    24 00000021 802C1930                		sub byte [ecx+ebx] , 48
+    25 00000025 F765FC                  		mul dword [ebp-4]
+    26 00000028 BA00000000              		mov edx,0
+    27 0000002D 8A140B                  		mov byte dl,[ebx+ecx]
+    28 00000030 01D0                    		add eax,edx
+    29 00000032 43                      		inc ebx
+    30 00000033 EBE6                    		jmp getting_number
+    31                                  
+    32                                  	cotinue_to_convert_to_hexa_char:
+    33 00000035 BB0B000000              		mov ebx,11
+    34 0000003A C745FC10000000          		mov dword [ebp-4],16
+    35                                  
+    36                                  	convert_to_hexa_char: ; now eax stores the decimal number
+    37 00000041 83F800                  		cmp eax,0
+    38 00000044 7425                    		je continue
+    39 00000046 BA00000000              		mov edx,0
+    40 0000004B F775FC                  		div dword [ebp-4]
+    41 0000004E 83FA09                  		cmp edx, 9
+    42 00000051 7E0C                    		jle convert_to_char_0_9
+    43                                  		convert_to_char_A_F:
+    44 00000053 80C237                  			add dl,55
+    45 00000056 8893[00000000]          			mov byte [an + ebx],dl
+    46 0000005C 4B                      			dec ebx
+    47 0000005D EBE2                    			jmp convert_to_hexa_char
+    48                                  
+    49                                  		convert_to_char_0_9:
+    50 0000005F 80C230                  			add dl,48
+    51 00000062 8893[00000000]          			mov byte [an + ebx], dl
+    52 00000068 4B                      			dec ebx
+    53 00000069 EBD6                    			jmp convert_to_hexa_char
+    54                                  
+    55                                  
+    56                                  
+    57                                  	continue:
+    58 0000006B C605[0C000000]00        		mov byte [an + 12], 0 
+    59 00000072 68[00000000]            		push dword format
+    60 00000077 E8(00000000)            		call printf
+    61 0000007C 83C408                  		add esp, 8		; clean up stack after call
+    62 0000007F 61                      		popad			
+    63 00000080 89EC                    		mov esp, ebp	
+    64 00000082 5D                      		pop ebp
+    65 00000083 C3                      		ret
