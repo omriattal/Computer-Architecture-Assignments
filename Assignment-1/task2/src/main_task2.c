@@ -11,8 +11,10 @@ int main(int argc, char **argv)
 
   while (true)
   {
-    
     fgets(buf, MAX_LEN, stdin); /* get user input string */
+      if(strcmp(buf,"q\n") == 0) {
+      break;
+    }
 
     convertor(buf);
   } /* call your assembly function */
