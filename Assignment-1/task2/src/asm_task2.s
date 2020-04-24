@@ -21,7 +21,7 @@ convertor:
 	mov eax,0
 	getting_number:
 		cmp byte [ecx+ebx],10 ;checks if the char is a newline
-		je continue
+		je continue_with_number
 		sub byte [ecx+ebx] , 48
 		mul dword [ebp-4]
 		mov edx,0
@@ -30,7 +30,7 @@ convertor:
 		inc ebx
 		jmp getting_number
 
-	continue:
+	continue_with_number:
 	mov [an],eax
 	push dword [an]	; call printf with 2 arguments -  
 	push format_integer	; pointer to str and pointer to format string
