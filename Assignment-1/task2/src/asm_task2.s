@@ -1,7 +1,6 @@
 section	.rodata			; we define (global) read-only variables in .rodata section
 	format: db "%s", 10, 0
 	format_integer: db "%d",10,0
-	omri: db "the king",10,0	; format string
 section .bss			; we define (global) uninitialized variables in .bss section
 	an: resb 12		; enough to store integer in [-2,147,483,648 (-2^31) : 2,147,483,647 (2^31-1)]
 	finished_string: resb 12
@@ -35,8 +34,6 @@ convertor:
 		mov dword [ebp-4],16
 
 	convert_to_hexa_char: ; now eax stores the decimal number
-		cmp eax,0
-		je reverse_string_begin_init_edx
 		mov edx,0
 		div dword [ebp-4]
 		cmp edx, 9
@@ -45,14 +42,18 @@ convertor:
 			add dl,55
 			mov byte [an + ebx],dl
 			inc ebx
-			jmp convert_to_hexa_char
+			jmp condition
 
 		convert_to_char_0_9:
 			add dl,48
 			mov byte [an + ebx], dl
 			inc ebx
+			jmp condition
+		condition: ;added these lines
+			cmp eax,0
+			je reverse_string_begin_init_edx
 			jmp convert_to_hexa_char
-
+			
 	reverse_string_begin_init_edx:
 		mov edx, 0
 	reverse_string_begin:
@@ -67,6 +68,7 @@ convertor:
 			jmp reverse_string_begin
 
 	continue:
+		mov byte [finished_string + edx], 0 ; added
 		push finished_string
 		push format
 		call printf
