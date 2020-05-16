@@ -619,13 +619,14 @@ check_even: ;receives a string and outputs eax = 1 if its length is even, 1 othe
 
 print_node: ;receives a pointer to a node and outputs all of its data
     init_func 4
+    mov dword [ebp-4],0 ; if it's 0 then there was no number popped and printed
     mov ebx, dword [ebp+8] ; ebx holds the pointer to the node
     mov edx,0
     mov eax,0
     mov byte [ebp-4],0 ; will count the amount of times pushed data to stack
     .iterator: 
         cmp ebx,0 ; compares ebx (holds pointer) to nullptr
-        je .print_special_case
+        je .no_leading_zeroes
         mov edx,0
         mov dl, byte [ebx] ; move the data to edx
         push edx ; stores the data
@@ -634,10 +635,17 @@ print_node: ;receives a pointer to a node and outputs all of its data
         mov ebx,ecx ; update ebx
         jmp .iterator
 
-    .print_special_case: ; for different formatting
+    .no_leading_zeroes:
+        cmp eax,0
+        je .finished_reading
         pop edx
-        print format_hexa_no_pad,edx
         dec eax
+        cmp edx,0
+        je .no_leading_zeroes
+
+    .print_special_case: ; for different formatting
+        print format_hexa_no_pad,edx  
+        mov dword [ebp-4],1  
     .print_stack_loop:
             cmp eax,0 ; no more pushes in the stack, only the last one
             je .finished_reading
@@ -646,8 +654,25 @@ print_node: ;receives a pointer to a node and outputs all of its data
             dec eax 
             jmp .print_stack_loop
 
+
+; .print_special_case: ; for different formatting
+;         pop edx
+;         print format_hexa_no_pad,edx
+;         dec eax
+    
+;     .print_stack_loop:
+;             cmp eax,0 ; no more pushes in the stack, only the last one
+;             je .finished_reading
+;             pop edx
+;             print format_hexa,edx
+;             dec eax 
+;             jmp .print_stack_loop
+    
     .finished_reading:
-        
+        cmp dword[ebp-4],0
+        jne .finished
+        print format_hexa_no_pad,0
+        .finished:
         print format_string,newline_msg
         end_func 4
 
@@ -657,18 +682,6 @@ make_node: ;receives a string and makes a a series of nodes. eax holds it
     mov dword [ebp-8],0
     mov dword [ebp-12],0
     mov ebx, dword [ebp+8] ; ebx stores the pointer to the string
-
-    .ignore_leading_zeroes:
-        cmp byte [ebx],'0'
-        jne .no_more_zeroes
-        inc ebx
-        jmp .ignore_leading_zeroes
-    
-    .no_more_zeroes:
-        cmp byte [ebx] , 10 ; the end
-        jne .continue
-        dec ebx
-    .continue:
     push ebx
     call check_even ; eax stores 1 if the length is even and 0 otherwise
     add esp,4 
@@ -869,7 +882,6 @@ handle_number_of_digits: ; received nothing - pop the last node and pushes its l
         mov dl, byte [operand_stack_index]
         dec byte [operand_stack_index] ; decrements the index, get ready for calculate hex digits
         call calculate_hex_digits ; eax stores the number of digits
-        print format_hexa, eax
         call stack_pop ; pop the node from the stack
         create_link al , 0 ; al is the data, calloc ptr has the ptr
         mov ecx , dword [calloc_ptr] ; move ptr to ecx
