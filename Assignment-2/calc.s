@@ -259,7 +259,7 @@ bitwise_and:
     mov ebx, dword [operand_stack+4*edx] ; the first one
     dec edx
     dec byte [operand_stack_index]
-    mov ecx, dword [operand_stack +4*edx] ; the second node
+    mov ecx, dword [operand_stack +4*edx] ; the first node
 
     .bitwise_first:
         mov eax,0
@@ -278,19 +278,18 @@ bitwise_and:
 
     .bitwise_rest:
         cmp ebx,0 ; ebx is null
-        jmp .finished_reading
+        je .no_ebx
         cmp ecx,0
-        jmp .finished_reading
+        je .no_ecx
         mov edx,0
         mov dl, byte [ebx]
         mov dh, byte [ecx]
         AND dl,dh
-        print format_hexa, edx
         mov dword [ebp-8],eax ; backup
         mov eax, 0
         mov al,dl
         create_link al , 0 ; now calloc ptr holds the new ptr
-        mov eax, dword [ebp-8] ; restore
+        mov eax, dword [ebp-8]
         mov edx, dword [calloc_ptr]
         mov dword [eax + 1],edx ; next of eax
         mov eax, edx ; eax = eax -> next
@@ -299,6 +298,38 @@ bitwise_and:
         mov edx, dword [ecx + 1]; edx = ecx->next
         mov ecx, edx ; ecx = ecx -> next
         jmp .bitwise_rest
+
+    .no_ebx:
+        cmp ecx,0
+        je .finished_reading
+        mov edx,0
+        mov dword [ebp-8],eax ; backup
+        mov eax, 0
+        mov al,0
+        create_link al,0 ; now calloc ptr holds the new ptr
+        mov eax, dword [ebp-8]
+        mov edx, dword [calloc_ptr]
+        mov dword [eax+1], edx ; edx = eax -> next
+        mov eax, edx ; eax = eax -> next
+        mov edx, dword [ecx + 1]; edx = ecx->next
+        mov ecx, edx ; ecx = ecx -> next
+        jmp .no_ebx
+
+    .no_ecx:
+        cmp ebx,0
+        je .finished_reading
+        mov edx,0
+        mov dword [ebp-8],eax ; backup
+        mov eax, 0
+        mov al,0
+        create_link al , 0 ; now calloc ptr holds the new ptr
+        mov eax, dword [ebp-8]
+        mov edx, dword [calloc_ptr]
+        mov dword [eax+1], edx ; edx = eax -> next
+        mov eax, edx ; eax = eax -> next
+        mov edx, dword [ebx + 1]; edx = ebx->next
+        mov ebx, edx ; ecx = ecx -> next
+        jmp .no_ecx
 
     .finished_reading:
         mov eax, dword [ebp-4]
@@ -345,7 +376,6 @@ bitwise_or: ; receives nothing , assumes correct index locations
         mov dl, byte [ebx]
         mov dh, byte [ecx]
         OR dl,dh
-        print format_hexa, edx
         mov dword [ebp-8],eax ; backup
         mov eax, 0
         mov al,dl
@@ -458,8 +488,10 @@ calculate_hex_digits: ; receives nothing - iterates over the current node list a
             mov ecx , ebx ; ecx = ecx -> next
             jmp .read_loop
         .last_node_case:
-            cmp byte [ecx], 15 ; smaller than 15
-            jg .inc_eax_2 ; larger than 15 - two digits
+            mov edx,0
+            mov dl, byte [ecx]
+            cmp dl, 15 ; compares with F
+            ja .inc_eax_2 ; larger than 15 - two digits
         .inc_eax_1:
             inc eax
             mov ecx , ebx ; ecx = ecx -> next
@@ -654,19 +686,6 @@ print_node: ;receives a pointer to a node and outputs all of its data
             dec eax 
             jmp .print_stack_loop
 
-
-; .print_special_case: ; for different formatting
-;         pop edx
-;         print format_hexa_no_pad,edx
-;         dec eax
-    
-;     .print_stack_loop:
-;             cmp eax,0 ; no more pushes in the stack, only the last one
-;             je .finished_reading
-;             pop edx
-;             print format_hexa,edx
-;             dec eax 
-;             jmp .print_stack_loop
     
     .finished_reading:
         cmp dword[ebp-4],0
