@@ -1,4 +1,4 @@
-# Assembly-Assignments
+# Computer-Architecture-Assignments
 The Assignments of the course Computer Architecture in Ben-Gurion University, Israel
 All of the assignments are written in assembly language. Some code of C may be involved though.
 
