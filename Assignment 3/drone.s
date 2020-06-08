@@ -11,6 +11,8 @@ section .data
 section .text
     extern seed
     extern random_word
+    extern position_gen
+    extern angle_gen    
     extern printf
 
 %macro print 2

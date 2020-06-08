@@ -1,13 +1,14 @@
 section .data
     format_string: db "%s",0
     format_integer: db "%d",10,0
-    format_float: db 
+    format_float: db "%.2f",10,0
     newline_msg: db 10,0
     BOARD_SIZE: dd 100
     MAX_SHORT: dd 0xFFFF
-    MAX_ANGLE: dd 360
+    THREE_SIXTY: dd 360
+    ONE_EIGHTY: dd 180
 section .bss
-    seed: resb 2 ; seed is a word
+    seed: resd 1 ; seed is a word
     number_of_drones: resd 1
     number_of_targets: resd 1
     steps_to_print: resd 1
@@ -48,8 +49,17 @@ section .bss
     pop ebp
     ret
 %endmacro
-%macro print_float
-
+%macro print_float 1
+    pushad
+    pushfd
+    fld %1
+    sub esp,8
+    fstp qword [esp]
+    push format_float
+    call printf
+    add esp,12
+    popfd
+    popad
 %endmacro
 
 section .text
@@ -65,18 +75,18 @@ section .text
 
 main: ; the main function
     init_func 0
-    push dword [ebp+12] ; char* argv[]
-    push dword [ebp+8] ;argc
-    call init
-    add esp,8
+    mov word [seed],0x1111
+    call position_gen
+    print_float dword [position_res]
+     call position_gen
+    print_float dword [position_res]
+    call position_gen
+    print_float dword [position_res]
     end_func 0
-
-
 init:
     init_func 4
     mov ebx, dword [ebp+8]
     mov ecx, dword [ebp+12]
-    
     end_func 4
 
 random_bit:
@@ -104,24 +114,21 @@ random_word:
 
 position_gen:
     init_func 0
-    mov eax,0
-    mov edx,0
     call random_word ; now seed has the right number we'll use
-    mov ax, word [seed]
-    fild dword eax
-    fidiv dword [MAX_SHORT]
-    fimul dword [BOARD_SIZE]
+    fild dword [seed]
+    fdiv dword [MAX_SHORT]
+    fmul dword [BOARD_SIZE]
     fstp dword [position_res] ; position_res will hold the result of the operation
     end_func 0
 angle_gen:
     init_func 0
-    mov eax,0
-    mov edx,0
     call random_word ; now seed has the right number we'll use
-    mov ax, word [seed]
-    fild dword eax
+    fild dword [seed]
     fidiv dword [MAX_SHORT]
-    fimul dword [MAX_ANGLE] 
+    fimul dword [THREE_SIXTY] 
+    fldpi
+    fmulp
+    fidiv dword [ONE_EIGHTY]
     fstp dword [angle_res] ; angle_res will hold the result of the operation
     end_func 0
 
