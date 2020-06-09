@@ -503,12 +503,15 @@ calculate_hex_digits: ; receives nothing - iterates over the current node list a
 free_stack: ;frees the stack
     init_func 0
     mov edx, 0 ; the index
+    mov dl, byte [operand_stack_index]
+    dec dl
     .free_loop:
-        cmp dl, byte [operand_stack_size] ; means we're done
+        cmp dl, 0 ; means we're done
         je .finished_deleting
         mov byte [operand_stack_index] , dl ; getting ready for stack push
+        print format_integer,edx
         call stack_pop ; frees the current node
-        inc dl
+        dec edx
         jmp .free_loop
     .finished_deleting:
     end_func 0
@@ -537,11 +540,30 @@ is_number: ; receives a ptr to a string and outputs 1 in eax if the first char i
     init_func 4
     mov ebx, dword [ebp +8] ; ebx stores the ptr
     cmp byte [ebx],48 ; compars to '0'
-    jb .not_a_number
+    jl .not_a_number
     cmp byte [ebx],58 ; compars to ':' 
-    jge .not_a_number
+    jge .check_hexa
+    jmp .yes_a_number
+    .check_hexa:
+    cmp byte [ebx],'A'
+    je .yes_a_number
+    cmp byte [ebx],'B'
+    je .yes_a_number
+    cmp byte [ebx],'C'
+    je .yes_a_number
+    cmp byte [ebx],'D'
+    je .yes_a_number
+    cmp byte [ebx],'E'
+    je .yes_a_number
+    cmp byte [ebx],'F'
+    je .yes_a_number
+    jmp .not_a_number
     mov eax, 1 ; the first char is a number
     jmp .finished_reading
+
+    .yes_a_number:
+        mov eax,1
+        jmp .finished_reading
 
     .not_a_number:
         mov eax,0
@@ -567,10 +589,10 @@ init_args: ;receives argc [ebp+8], char* argv [ebp+12] - updates stack size
         push dword [ecx+4*edx] ; pushes string ptr
         call convert_hex_str_to_number ; now eax  holds the decimal number
         add esp,4 
-            mov byte [is_allocated],1 ; says that the stack was allocated
-            allocate_stack eax  ; now calloc_ptr holds the pointer to the stack
-            mov byte [operand_stack_size], al
-            jmp .finished_reading
+        mov byte [is_allocated],1 ; says that the stack was allocated
+        allocate_stack eax  ; now calloc_ptr holds the pointer to the stack
+        mov byte [operand_stack_size], al
+        jmp .finished_reading
 
         .continue_reading:
             inc edx
@@ -839,10 +861,6 @@ my_calc:
     jmp .main_loop
     
     .finish_program:
-        cmp byte [is_allocated],1
-        jne .continue
-        call free_stack
-        .continue:
         end_func 0
 
 handle_number: ; handles the enter number option - makes node list in the operand stack if there is space, receives str_input
@@ -864,7 +882,6 @@ handle_number: ; handles the enter number option - makes node list in the operan
         inc byte [operand_stack_index] ; increments the index
 
     .finished_reading:
-    inc dword [number_of_actions]
     end_func 0 
     
 

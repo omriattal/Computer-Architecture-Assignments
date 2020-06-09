@@ -1,20 +1,23 @@
 section .data
     format_string: db "%s",0
-    format_integer: db "%d",10,0
-    format_float: db "%.2f",10,0
+    format_integer: db "%d",0
+    format_float: db "%.2f",0
+    format_float_regular: db "%f",0
     newline_msg: db 10,0
     BOARD_SIZE: dd 100
     MAX_SHORT: dd 0xFFFF
     THREE_SIXTY: dd 360
     ONE_EIGHTY: dd 180
+    seed: dd 0 ; seed is a word
+    number_of_drones: dd 0
+    number_of_scheduler_cycles: dd 0
+    number_of_printer_cycles: dd 0
+    maximum_distance: dd 0.0
+
 section .bss
-    seed: resd 1 ; seed is a word
-    number_of_drones: resd 1
-    number_of_targets: resd 1
-    steps_to_print: resd 1
-    maximum_distance: resd 1
     position_res: resd 1
     angle_res: resd 1
+    arg_temp: resd 1
 
 %macro print 2
     pushfd
@@ -61,6 +64,27 @@ section .bss
     popfd
     popad
 %endmacro
+%macro print_newline 0
+    pushad
+    pushfd
+    push dword newline_msg
+    push dword format_string
+    call printf
+    add esp,8
+    popfd
+    popad
+%endmacro
+%macro read_arg 3
+    pushad
+    pushfd
+    push dword %3
+    push dword %2
+    push dword %1
+    call sscanf
+    add esp,12
+    popfd
+    popad
+%endmacro
 
 section .text
   align 16
@@ -75,12 +99,19 @@ section .text
 
 main: ; the main function
     init_func 0
+    push dword [ebp+12]
+    call init_args
+    add esp,4
     end_func 0
-init:
-    init_func 4
-    mov ebx, dword [ebp+8]
-    mov ecx, dword [ebp+12]
-    end_func 4
+init_args:
+    init_func 0
+    mov ecx, dword [ebp+8] ; char* argv[]
+    read_arg [ecx+4],format_integer,number_of_drones
+    read_arg [ecx+8],format_integer,number_of_scheduler_cycles 
+    read_arg [ecx+12],format_integer,number_of_printer_cycles
+    read_arg [ecx+16],format_float_regular,maximum_distance
+    read_arg [ecx+20],format_integer,seed
+    end_func 0
 
 random_bit:
     init_func 0
