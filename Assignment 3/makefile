@@ -6,7 +6,7 @@ br: main.o
 main.o: main.s
 	nasm -f elf main.s -o main.o
 
-.PHONY: main
+.PHONY: br
 
 clean: 
-	rm -f *.o main
+	rm -f *.o br

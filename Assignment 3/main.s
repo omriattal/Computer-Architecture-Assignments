@@ -75,13 +75,6 @@ section .text
 
 main: ; the main function
     init_func 0
-    mov word [seed],0x1111
-    call position_gen
-    print_float dword [position_res]
-     call position_gen
-    print_float dword [position_res]
-    call position_gen
-    print_float dword [position_res]
     end_func 0
 init:
     init_func 4
@@ -124,8 +117,8 @@ angle_gen:
     init_func 0
     call random_word ; now seed has the right number we'll use
     fild dword [seed]
-    fidiv dword [MAX_SHORT]
-    fimul dword [THREE_SIXTY] 
+    fdiv dword [MAX_SHORT]
+    fmul dword [THREE_SIXTY] 
     fldpi
     fmulp
     fidiv dword [ONE_EIGHTY]
