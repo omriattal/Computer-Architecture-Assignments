@@ -1,19 +1,21 @@
-struc drone
-    x: resd 1
-    y: resd 1
-    angle: resd 1
-    score: resd 1
-endstruc
-
-section .data
-
-
-section .text
+section .data:
+    X: equ 0
+    Y: equ 4
+    ANGLE: equ 8
+    SPEED: equ 12
+    SCORE: equ 16
+    ZERO: dd 0.0
+section .text:
+    global init_drone
     extern seed
     extern random_word
     extern position_gen
-    extern angle_gen    
+    extern angle_gen   
     extern printf
+    extern position_res
+    extern angle_res
+    extern angle_gen
+
 
 %macro print 2
     pushfd
@@ -48,3 +50,26 @@ section .text
     pop ebp
     ret
 %endmacro
+
+init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the ptr
+    init_func 0
+    mov ebx, dword [ebp+8]
+    call position_gen ; result is in position res
+    fld dword [position_res]
+    fstp dword [ebx+X] ; x position
+    call position_gen ; result is in position res
+    fld dword [position_res] 
+    fstp dword [ebx+Y] ; y position 
+    call angle_gen ; result is in angle res
+    fld dword [angle_res]
+    fstp dword [ebx+ANGLE] 
+    fld dword [ZERO]
+    fstp dword [ebx+SPEED]
+    mov dword [ebx+SCORE],0
+    end_func 0
+
+
+
+     
+
+

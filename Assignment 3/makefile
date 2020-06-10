@@ -1,12 +1,25 @@
-all: br
+#format is target-name: target dependencies
+#{-tab-}actions
 
-br: main.o
-	gcc -m32 -Wall -g main.o -o br
+# All Targets
+all: ass3
 
-main.o: main.s
-	nasm -f elf main.s -o main.o
+ass3: ass3.o printer.o drone.o scheduler.o target.o
+	gcc -m32 -Wall -g ass3.o printer.o drone.o scheduler.o target.o -o ass3
 
-.PHONY: br
+ass3.o: ass3.s
+	nasm -f elf ass3.s -o ass3.o
+printer.o: printer.s
+	nasm -f elf printer.s -o printer.o
+drone.o: drone.s
+	nasm -f elf drone.s -o drone.o
+scheduler.o: scheduler.s
+	nasm -f elf scheduler.s -o scheduler.o
+target.o: target.s
+	nasm -f elf target.s -o target.o
+#tell make that "clean" is not a file name!
+.PHONY: clean
 
+#Clean the build directory
 clean: 
-	rm -f *.o br
+	rm -f *.o ass3

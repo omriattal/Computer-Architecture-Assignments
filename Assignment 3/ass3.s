@@ -1,4 +1,7 @@
 section .data
+    global angle_res
+    global position_res
+    global number_of_drones
     format_string: db "%s",0
     format_integer: db "%d",0
     format_float: db "%.2f",0
@@ -14,11 +17,15 @@ section .data
     number_of_printer_cycles: dd 0
     maximum_distance: dd 0.0
 
+
 section .bss
+    global drones
     position_res: resd 1
     angle_res: resd 1
     arg_temp: resd 1
+    drones: resd 1
 
+section .text
 %macro print 2
     pushfd
     pushad
@@ -85,23 +92,38 @@ section .bss
     popfd
     popad
 %endmacro
+%macro create_drones 0
+    pushad
+    pushfd
+    push dword 20 ; size of ptr
+    push dword [number_of_drones]
+    call calloc
+    add esp,8
+    mov dword [drones],eax ; assigns the pointer to operand stack
+    popfd
+    popad
+%endmacro
 
-section .text
   align 16
   global main
   global random_words
   global position_gen
+  global angle_gen
   extern printf
+  extern init_drone
   extern malloc
   extern calloc 
   extern free  
   extern sscanf
+  extern print_drones
 
 main: ; the main function
     init_func 0
     push dword [ebp+12]
     call init_args
     add esp,4
+    call init_drones
+    call print_drones
     end_func 0
 init_args:
     init_func 0
@@ -112,6 +134,23 @@ init_args:
     read_arg [ecx+16],format_float_regular,maximum_distance
     read_arg [ecx+20],format_integer,seed
     end_func 0
+
+init_drones:
+    init_func 0
+    create_drones
+    mov eax, dword [drones]
+    mov ebx,0
+    .main_loop:
+        cmp ebx,dword [number_of_drones] ; the size of drones
+        je .finish_initialize
+        push eax
+        call init_drone
+        add esp,4
+        add eax,20 ; next drone!
+        inc ebx ; for the counter.
+        jmp .main_loop
+    .finish_initialize:
+        end_func 0
 
 random_bit:
     init_func 0
