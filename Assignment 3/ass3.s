@@ -111,19 +111,22 @@ section .text
   global angle_gen
   extern printf
   extern init_drone
+  extern init_target
   extern malloc
   extern calloc 
   extern free  
   extern sscanf
   extern print_drones
+  extern print_board
 
 main: ; the main function
     init_func 0
     push dword [ebp+12]
     call init_args
     add esp,4
+    call init_target
     call init_drones
-    call print_drones
+    call print_board
     end_func 0
 init_args:
     init_func 0

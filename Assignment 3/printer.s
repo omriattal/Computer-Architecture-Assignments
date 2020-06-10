@@ -4,13 +4,18 @@ section .data
     ANGLE: equ 8
     SPEED: equ 12
     SCORE: equ 16
-    format_float: db "%.2f ",0
+    format_float: db "%.2f",0
     format_string: db "%s",0
-    format_integer: db "%d ",0
+    format_integer: db "%d",0
+    ;TODO: DELETE THE SPACE HERE
+    comma_msg: db ", ",0
     newline_msg: db 10,0
 
 section .text
     global print_drones
+    global print_board
+    extern target_x
+    extern target_y
     extern printf
     extern drones
     extern number_of_drones
@@ -71,6 +76,15 @@ section .text
     popad
 %endmacro
 
+print_board:
+    init_func 0
+    print_float dword [target_x] ; prints target x location
+    print format_string,comma_msg
+    print_float dword [target_y] ; prints target y location
+    print_newline
+    call print_drones
+    end_func 0
+
 print_drones:
     init_func 0
     mov ebx, dword [drones]
@@ -81,10 +95,15 @@ print_drones:
         inc ecx 
         print format_integer,ecx
         dec ecx
+        print format_string,comma_msg
         print_float dword [ebx+X]
+        print format_string,comma_msg
         print_float dword [ebx+Y]
+        print format_string,comma_msg
         print_float dword [ebx+ANGLE]
+        print format_string,comma_msg
         print_float dword [ebx+SPEED]
+        print format_string,comma_msg
         print format_integer,[ebx+SCORE]
         inc ecx
         add ebx,20
