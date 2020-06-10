@@ -95,7 +95,7 @@ section .text
 %macro create_drones 0
     pushad
     pushfd
-    push dword 20 ; size of ptr
+    push dword 20 ; size of each drones
     push dword [number_of_drones]
     call calloc
     add esp,8
@@ -104,7 +104,6 @@ section .text
     popad
 %endmacro
 
-  align 16
   global main
   global random_words
   global position_gen

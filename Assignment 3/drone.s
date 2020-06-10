@@ -16,7 +16,6 @@ section .text:
     extern angle_res
     extern angle_gen
 
-
 %macro print 2
     pushfd
     pushad
@@ -67,7 +66,7 @@ init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the pt
     fstp dword [ebx+SPEED]
     mov dword [ebx+SCORE],0
     end_func 0
-
+    
 
 
      
