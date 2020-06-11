@@ -1,11 +1,19 @@
+STACKSZ equ 16*1024
+FUNC equ 0
+STACK equ 4
+
+
 section .data
     global angle_res
     global position_res
     global number_of_drones
+    global scheduler_co
     format_string: db "%s",0
-    format_integer: db "%d",0
+    format_integer: db "%d",10,0
     format_float: db "%.2f",0
     format_float_regular: db "%f",0
+    format_hexa: db "%X",10,0
+    debug_msg: db "hello",10,0
     newline_msg: db 10,0
     BOARD_SIZE: dd 100
     MAX_SHORT: dd 0xFFFF
@@ -16,15 +24,30 @@ section .data
     number_of_scheduler_cycles: dd 0
     number_of_printer_cycles: dd 0
     maximum_distance: dd 0.0
-
-
+    scheduler_co: dd scheduler_func
+                  dd scheduler_stack+STACKSZ
+    target_co:    dd target_func
+                  dd target_stack+STACKSZ
+    printer_co:   dd printer_func
+                  dd printer_stack+STACKSZ
 section .bss
     global drones
+    global curr
+    global cors
+    global sp_main
     position_res: resd 1
     angle_res: resd 1
     arg_temp: resd 1
     drones: resd 1
-
+    curr: resd 1
+    cors: resd 1
+    sp_main: resd 1
+    sp_tmp: resd 1
+    stack_tmp: resd 1
+    printer_stack: resd STACKSZ
+    scheduler_stack: resd STACKSZ
+    target_stack: resd STACKSZ
+    cor_tmp: resd 2
 section .text
 %macro print 2
     pushfd
@@ -92,14 +115,25 @@ section .text
     popfd
     popad
 %endmacro
-%macro create_drones 0
+%macro create_array 2
     pushad
     pushfd
-    push dword 20 ; size of each drones
+    push dword %1 ; size of each something
     push dword [number_of_drones]
     call calloc
     add esp,8
-    mov dword [drones],eax ; assigns the pointer to operand stack
+    mov dword [%2],eax ; assigns the pointer to operand stack
+    popfd
+    popad
+%endmacro
+%macro allocate 2
+    pushad
+    pushfd
+    push dword %1
+    push dword 1
+    call calloc
+    add esp,8
+    mov dword [%2],eax
     popfd
     popad
 %endmacro
@@ -108,6 +142,9 @@ section .text
   global random_words
   global position_gen
   global angle_gen
+  global resume
+  global end_co
+  global do_resume
   extern printf
   extern init_drone
   extern init_target
@@ -116,16 +153,31 @@ section .text
   extern free  
   extern sscanf
   extern print_drones
-  extern print_board
+  extern printer_func
+  extern drone_func
+  extern scheduler_func
+  extern target_func
 
 main: ; the main function
     init_func 0
     push dword [ebp+12]
     call init_args
     add esp,4
-    call init_target
     call init_drones
-    call print_board
+    call init_target
+    call printer_func
+    call create_drone_cors
+    call init_all_cors
+    start_co:
+        pushad
+        pushfd
+        mov [sp_main],esp
+        mov ebx,scheduler_co ; ebx holds the ptr to scheduler co
+        jmp do_resume
+end_co:
+        mov esp, [sp_main]
+        popfd
+        popad
     end_func 0
 init_args:
     init_func 0
@@ -139,7 +191,7 @@ init_args:
 
 init_drones:
     init_func 0
-    create_drones
+    create_array 20,drones
     mov eax, dword [drones]
     mov ebx,0
     .main_loop:
@@ -153,6 +205,79 @@ init_drones:
         jmp .main_loop
     .finish_initialize:
         end_func 0
+
+create_drone_cors:
+    init_func 0
+    create_array 4,cors ; cors is array of ptrs
+    mov edx,0
+    mov eax, dword [cors] ; eax is cors array
+    .loop:
+        cmp edx, dword [number_of_drones]
+        je .finish_initialize
+        allocate 8,cor_tmp
+        mov ebx, dword [cor_tmp] ; ebx holds the current co-routine
+        mov dword [eax+4*edx],ebx ; plant the co-routine in the array
+        mov dword [ebx+FUNC],drone_func ; set the function to drone_func
+        allocate STACKSZ,stack_tmp ; stack is in curr stack
+        mov ecx, dword [stack_tmp] ; ecx is the stack tmp
+        add ecx,STACKSZ ; make ecx the top of the stack
+        mov dword [ebx+STACK],ecx ; assign stack ptr
+        inc edx
+        jmp .loop
+    .finish_initialize:
+    end_func 0
+init_co:
+    init_func 0
+    mov ebx, dword [ebp+8] ; get co-routine ptr
+    mov eax, dword [ebx+FUNC]
+    mov [sp_tmp], esp ; save current esp
+    mov esp,[ebx+STACK] ; get stack location
+    push eax ; push func to co-routine stack
+    pushfd
+    pushad
+    mov [ebx+STACK],esp ; update the ptr after all the pushes
+    mov esp, dword [sp_tmp]
+    end_func 0
+
+init_all_cors:
+    init_func 0
+    mov edx,0
+    .init_drones_cors:
+        cmp edx, dword [number_of_drones]
+        je .init_others
+        mov eax, dword [cors] ; the co-routines array
+        push  dword [eax+4*edx] ; the current co-routine
+        call init_co
+        add esp,4
+        inc edx
+        jmp .init_drones_cors
+    .init_others:
+        push dword scheduler_co
+        call init_co
+        add esp,4
+        push dword printer_co
+        call init_co
+        add esp,4
+        push dword target_co
+        call init_co
+        add esp,4
+        end_func 0
+
+
+
+resume: ;ebx points to the struct of the co-routine to be resumed
+    pushfd
+    pushad
+    mov edx,[curr] ; the current co-routine
+    mov [edx+STACK],esp
+do_resume:
+    mov esp, dword [ebx+STACK]
+    mov [curr],ebx ; moves ebx -> curr
+    popad
+    popfd
+    ret
+
+
 
 random_bit:
     init_func 0
@@ -186,6 +311,7 @@ position_gen:
     fstp dword [position_res] ; position_res will hold the result of the operation
     end_func 0
 angle_gen:
+
     init_func 0
     call random_word ; now seed has the right number we'll use
     fild dword [seed]
@@ -196,6 +322,9 @@ angle_gen:
     fidiv dword [ONE_EIGHTY]
     fstp dword [angle_res] ; angle_res will hold the result of the operation
     end_func 0
+
+
+
 
 
 

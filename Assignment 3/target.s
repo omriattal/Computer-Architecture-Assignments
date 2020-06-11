@@ -7,6 +7,7 @@ section .bss
 
 section .text:
     global init_target
+    global target_func
     extern position_gen
     extern position_res
 
@@ -33,4 +34,8 @@ init_target:
     call position_gen
     fld dword [position_res]
     fstp dword [target_y]
+    end_func 0
+
+target_func:
+    init_func 0
     end_func 0

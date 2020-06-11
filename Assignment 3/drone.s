@@ -5,9 +5,13 @@ section .data:
     SPEED: equ 12
     SCORE: equ 16
     ZERO: dd 0.0
+    format_string: db "%s",0
+    hello: db "hello world",10,0
 section .text:
     global init_drone
+    global drone_func
     extern seed
+    extern resume
     extern random_word
     extern position_gen
     extern angle_gen   
@@ -15,6 +19,7 @@ section .text:
     extern position_res
     extern angle_res
     extern angle_gen
+    extern scheduler_co
 
 %macro print 2
     pushfd
@@ -68,7 +73,10 @@ init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the pt
     end_func 0
     
 
-
+drone_func:
+    print format_string,hello
+    mov ebx, scheduler_co ; the current co-routine
+    call resume
      
 
 

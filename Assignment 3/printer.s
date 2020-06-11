@@ -13,7 +13,7 @@ section .data
 
 section .text
     global print_drones
-    global print_board
+    global printer_func
     extern target_x
     extern target_y
     extern printf
@@ -76,7 +76,7 @@ section .text
     popad
 %endmacro
 
-print_board:
+printer_func:
     init_func 0
     print_float dword [target_x] ; prints target x location
     print format_string,comma_msg
