@@ -20,6 +20,8 @@ section .text
     extern target_y
     extern printf
     extern drones
+    extern scheduler_co
+    extern resume
     extern number_of_drones
 
 %macro print 2
@@ -79,13 +81,14 @@ section .text
 %endmacro
 
 printer_func:
-    init_func 0
     print_float dword [target_x] ; prints target x location
     print format_string,comma_msg
     print_float dword [target_y] ; prints target y location
     print_newline
     call print_drones
-    end_func 0
+    mov ebx, scheduler_co ; the current co-routine
+    call resume
+    jmp printer_func
 
 print_drones:
     init_func 0

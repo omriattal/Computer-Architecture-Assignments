@@ -20,6 +20,8 @@ section .text
     extern number_of_scheduler_cycles
     extern number_of_printer_cycles
     extern maximum_distance
+    extern printer_co
+    extern target_co
     extern do_resume
     extern end_co
 %macro init_func 1
@@ -68,19 +70,32 @@ scheduler_func:
     mov eax, dword [cors] ; the cors ptrs
     mov ebx, dword [number_of_drones]
     mov dword [amount_of_actives], ebx ; amount of actives == number of drones
-    round_robin:
+    .round_robin:
         cmp dword [amount_of_actives],0 ; only one active
-        je .finish
+        je finish
         mod edx,dword [number_of_drones] ; result is in modres
         mov ecx, dword [mod_res] ; store the result in ecx. ecx = i%N
         is_active ecx ; result is in active_res
+        .check_active_drone:
         cmp dword [active_res],1 ; this drone is active
         je .activate_drone
             .activate_drone:
                  mov ebx, dword [eax + 4*ecx] ;getting ready for resuming
                  call resume
-                 inc edx ; update the edx
-                 dec dword [amount_of_actives]
-                 jmp round_robin
-    .finish:
+        .check_printer:
+        mod edx,dword [number_of_printer_cycles] ; result in mod res
+        mov ecx, dword [mod_res]
+        cmp ecx,0
+        je .activate_printer
+        jmp .cont
+            .activate_printer:
+                mov ebx,printer_co
+                call resume
+                jmp .cont
+        .cont:
+            inc edx
+            dec dword [amount_of_actives]
+            jmp .round_robin
+
+    finish:
         jmp end_co

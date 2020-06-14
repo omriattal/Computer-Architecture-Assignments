@@ -8,6 +8,7 @@ section .data
     global position_res
     global number_of_drones
     global scheduler_co
+    global printer_co
     global number_of_scheduler_cycles
     global number_of_printer_cycles
     global maximum_distance
@@ -156,7 +157,6 @@ section .text
   extern calloc 
   extern free  
   extern sscanf
-  extern print_drones
   extern printer_func
   extern drone_func
   extern scheduler_func
