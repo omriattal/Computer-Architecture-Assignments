@@ -4,6 +4,8 @@ section .data
     ANGLE: equ 8
     SPEED: equ 12
     SCORE: equ 16
+    STATUS: equ 20
+    DRONE_SIZE equ 24
     format_float: db "%.2f",0
     format_string: db "%s",0
     format_integer: db "%d",0
@@ -105,8 +107,10 @@ print_drones:
         print_float dword [ebx+SPEED]
         print format_string,comma_msg
         print format_integer,[ebx+SCORE]
+        print format_string,comma_msg
+        print format_integer,[ebx+STATUS]
         inc ecx
-        add ebx,20
+        add ebx,DRONE_SIZE
         print_newline
         jmp .main_loop
     .finish_looping:

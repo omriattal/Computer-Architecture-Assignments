@@ -4,6 +4,7 @@ section .data:
     ANGLE: equ 8
     SPEED: equ 12
     SCORE: equ 16
+    STATUS: equ 20 ; dword
     ZERO: dd 0.0
     format_string: db "%s",0
     hello: db "hello world",10,0
@@ -70,6 +71,7 @@ init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the pt
     fld dword [ZERO]
     fstp dword [ebx+SPEED]
     mov dword [ebx+SCORE],0
+    mov dword [ebx+STATUS],1 ; active
     end_func 0
     
 

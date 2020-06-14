@@ -1,19 +1,22 @@
 STACKSZ equ 16*1024
 FUNC equ 0
 STACK equ 4
-
+DRONE_SIZE equ 24
 
 section .data
     global angle_res
     global position_res
     global number_of_drones
     global scheduler_co
+    global number_of_scheduler_cycles
+    global number_of_printer_cycles
+    global maximum_distance
     format_string: db "%s",0
     format_integer: db "%d",10,0
     format_float: db "%.2f",0
     format_float_regular: db "%f",0
-    format_hexa: db "%X",10,0
-    debug_msg: db "hello",10,0
+    format_hexa: db "%X",10,
+    not_enough_args: db "not enough args,exiting",10,0
     newline_msg: db 10,0
     BOARD_SIZE: dd 100
     MAX_SHORT: dd 0xFFFF
@@ -145,6 +148,7 @@ section .text
   global resume
   global end_co
   global do_resume
+
   extern printf
   extern init_drone
   extern init_target
@@ -165,7 +169,6 @@ main: ; the main function
     add esp,4
     call init_drones
     call init_target
-    call printer_func
     call create_drone_cors
     call init_all_cors
     start_co:
@@ -174,11 +177,12 @@ main: ; the main function
         mov [sp_main],esp
         mov ebx,scheduler_co ; ebx holds the ptr to scheduler co
         jmp do_resume
-end_co:
+    end_co:
         mov esp, [sp_main]
         popfd
         popad
     end_func 0
+    
 init_args:
     init_func 0
     mov ecx, dword [ebp+8] ; char* argv[]
@@ -191,7 +195,7 @@ init_args:
 
 init_drones:
     init_func 0
-    create_array 20,drones
+    create_array DRONE_SIZE,drones
     mov eax, dword [drones]
     mov ebx,0
     .main_loop:
@@ -200,7 +204,7 @@ init_drones:
         push eax
         call init_drone
         add esp,4
-        add eax,20 ; next drone!
+        add eax,DRONE_SIZE ; next drone!
         inc ebx ; for the counter.
         jmp .main_loop
     .finish_initialize:
@@ -263,8 +267,6 @@ init_all_cors:
         add esp,4
         end_func 0
 
-
-
 resume: ;ebx points to the struct of the co-routine to be resumed
     pushfd
     pushad
@@ -276,8 +278,6 @@ do_resume:
     popad
     popfd
     ret
-
-
 
 random_bit:
     init_func 0
