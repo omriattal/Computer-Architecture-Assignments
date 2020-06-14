@@ -79,6 +79,7 @@ drone_func:
     print format_string,hello
     mov ebx, scheduler_co ; the current co-routine
     call resume
+    jmp drone_func
      
 
 
