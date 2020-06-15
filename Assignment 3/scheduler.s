@@ -16,7 +16,8 @@ section .data
     drone_location: dd 0
     eliminate_msg: db 10,"ELIMINATED DRONE: ",0
     round_msg: db 10,"ROUND: ",0
-    winner_winner_chicken_dinner: db 10,"---- WINNER WINNER CHICKEN DINNER! ----",10,"THE WINNER IS DRONE - ",0
+    winner_winner_chicken_dinner: db 10,"---- WINNER WINNER CHICKEN DINNER! ----",10,"        THE WINNER IS DRONE - ",0
+    first_board: db "FIRST BOARD: ",10,0
     format_string: db "%s",0
     format_integer: db "%d",10,0
     curr_drone: dd 0 ; the current drone
@@ -121,9 +122,13 @@ section .text
 
 scheduler_func:
     mov edx,0 ; the index
+    print format_string,first_board
+    mov ebx, printer_co ; print first board
+    call resume 
     mov eax, dword [cors] ; the cors ptrs
     mov ebx, dword [number_of_drones]
     mov dword [amount_of_actives], ebx ; amount of actives == number of drones
+    
     round_robin:
         cmp dword [amount_of_actives],1 ; only one active
         je finish

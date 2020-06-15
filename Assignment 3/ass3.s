@@ -142,7 +142,6 @@ section .text
     popfd
     popad
 %endmacro
-
   global main
   global random_words
   global position_gen
