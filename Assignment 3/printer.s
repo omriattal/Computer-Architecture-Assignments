@@ -9,6 +9,8 @@ section .data
     format_float: db "%.2f",0
     format_string: db "%s",0
     format_integer: db "%d",0
+    active_msg: db "ACTIVE",0
+    inactive_msg: db "INACTIVE",0
     ;TODO: DELETE THE SPACE HERE
     comma_msg: db ", ",0
     newline_msg: db 10,0
@@ -109,7 +111,14 @@ print_drones:
         print format_string,comma_msg
         print format_integer,[ebx+SCORE]
         print format_string,comma_msg
-        print format_integer,[ebx+STATUS]
+        cmp dword [ebx+STATUS],1
+        je .print_active
+        print format_string,inactive_msg
+        jmp .cont
+        .print_active:
+            print format_string,active_msg
+
+        .cont:
         inc ecx
         add ebx,DRONE_SIZE
         print_newline

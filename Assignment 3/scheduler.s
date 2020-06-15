@@ -8,6 +8,7 @@ section .data
     SCORE: equ 16
     STATUS: equ 20 ; dword
     DRONE_SIZE equ 24
+    MAX_INT equ 0xFFFFFFF
     amount_of_actives: dd 0
     score_res: dd 0
     lowest_score: dd 0
@@ -183,15 +184,16 @@ scheduler_func:
 
 find_lowest_score:
     init_func 0
-    mov ebx,0
+    mov ebx,MAX_INT
     mov ecx,0 ; the index
     .loop:
         cmp ecx, dword [number_of_drones]
         je .finish
         is_active ecx ; result is in active res
         cmp dword [active_res],1 ; is active
-        jne .cont
+        jne .cont ; inactive
         get_score ecx ; result is in score_res
+        mov eax, dword [score_res]
         cmp ebx,dword [score_res]
         jle .cont ; ebx is smaller or equals
         mov ebx,dword [score_res] ; make ebx smaller
@@ -205,9 +207,10 @@ find_lowest_score:
 execute_order_66:
     init_func 0
     call find_lowest_score ; result is in lowest score
-    mov ecx, dword [lowest_score]
+    after:
     mov ebx,0
     mov eax, [drones]
+    mov ecx,0
     .loop:
         cmp ecx, dword[number_of_drones]
         je .finish
