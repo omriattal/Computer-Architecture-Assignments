@@ -1,4 +1,5 @@
 section .data:
+    extern curr_drone
     X: equ 0
     Y: equ 4
     ANGLE: equ 8
@@ -7,7 +8,8 @@ section .data:
     STATUS: equ 20 ; dword
     ZERO: dd 0.0
     format_string: db "%s",0
-    hello: db "hello world",10,0
+    format_integer: db "%d",10,0
+    hello: db "hello world from drone: ",0
 section .text:
     global init_drone
     global drone_func
@@ -21,7 +23,6 @@ section .text:
     extern angle_res
     extern angle_gen
     extern scheduler_co
-
 %macro print 2
     pushfd
     pushad
@@ -77,6 +78,7 @@ init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the pt
 
 drone_func:
     print format_string,hello
+    print format_integer, [curr_drone]
     mov ebx, scheduler_co ; the current co-routine
     call resume
     jmp drone_func

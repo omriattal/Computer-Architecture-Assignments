@@ -1,5 +1,6 @@
 section .data
     extern number_of_drones
+    global curr_drone
     X: equ 0
     Y: equ 4
     ANGLE: equ 8
@@ -11,13 +12,14 @@ section .data
     score_res: dd 0
     lowest_score: dd 0
     active_res: dd 0
-    mod_res: dd 0
+    modulu_res: dd 0
     drone_location: dd 0
     eliminate_msg: db 10,"ELIMINATED DRONE: ",0
     round_msg: db 10,"ROUND: ",0
-    winner_winner_chicken_dinner: db 10,"---- WINNER WINNER CHICKEN DINNER! ----",10,"THE WINNER IS - ",0
+    winner_winner_chicken_dinner: db 10,"---- WINNER WINNER CHICKEN DINNER! ----",10,"THE WINNER IS DRONE - ",0
     format_string: db "%s",0
     format_integer: db "%d",10,0
+    curr_drone: dd 0 ; the current drone
 section .text
     global scheduler_func
     extern cors
@@ -96,13 +98,13 @@ section .text
     popad
     popfd
 %endmacro
-%macro mod 2 
+%macro modulu 2 
     pushad
     pushfd
     mov eax,%1
     mov edx,0
     div %2
-    mov dword [mod_res],edx
+    mov dword [modulu_res],edx
     popfd
     popad
 %endmacro
@@ -112,7 +114,7 @@ section .text
     mov eax,%1
     mov edx,0
     div %2
-    mov dword [mod_res],eax
+    mov dword [modulu_res],eax
     popfd
     popad
 %endmacro
@@ -127,20 +129,21 @@ scheduler_func:
         je finish
         print format_string,round_msg
         print format_integer,edx
-        mod edx,dword [number_of_drones] ; result is in modres
-        mov ecx, dword [mod_res] ; store the result in ecx. ecx = i%N
+        modulu edx,dword [number_of_drones] ; result is in modulures
+        mov ecx, dword [modulu_res] ; store the result in ecx. ecx = i%N
         is_active ecx ; result is in active_res
         check_active_drone:
         cmp dword [active_res],1 ; this drone is active
         je activate_drone
         jmp check_printer
             activate_drone:
-                 mov ebx, dword [eax + 4*ecx] ;getting ready for resuming
-                 call resume
+                mov dword [curr_drone],ecx
+                mov ebx, dword [eax + 4*ecx] ;getting ready for resuming
+                call resume
         
         check_printer:
-        mod edx,dword [number_of_printer_cycles] ; result in mod res
-        mov ecx, dword [mod_res]
+        modulu edx,dword [number_of_printer_cycles] ; result in modulu res
+        mov ecx, dword [modulu_res]
         cmp ecx,0
         je activate_printer
         jmp check_elimination
@@ -151,18 +154,18 @@ scheduler_func:
         check_elimination:
             cmp edx,0 ; the index equals to 0 - not eliminating
             je cont
-            mod edx, dword [number_of_drones]
-            mov ecx, dword [mod_res] ; ecx = i%N
+            modulu edx, dword [number_of_drones]
+            mov ecx, dword [modulu_res] ; ecx = i%N
             cmp ecx,0
             jne cont ; not equals
-            divide edx,dword [number_of_drones] ; result in division in mod res
-            mov ecx, dword [mod_res] ; ecx = i/N
-            mod ecx, dword [number_of_scheduler_cycles]
-            mov ecx, dword [mod_res] ; ecx = i/N % R
+            divide edx,dword [number_of_drones] ; result in division in modulu res
+            mov ecx, dword [modulu_res] ; ecx = i/N
+            modulu ecx, dword [number_of_scheduler_cycles]
+            mov ecx, dword [modulu_res] ; ecx = i/N % R
             cmp ecx,0
             jne cont ; i/N % R != 0
-            call eliminate ; will eliminate a drone with the lowest score
-            dec dword [amount_of_actives]
+            call execute_order_66 ; will eliminate a drone with the lowest score
+            dec dword [amount_of_actives] ; one less active drone
      cont:
         inc edx
         jmp round_robin
@@ -194,7 +197,7 @@ find_lowest_score:
         mov dword [lowest_score],ebx ; save lowest score
     end_func 0
 
-eliminate:
+execute_order_66:
     init_func 0
     call find_lowest_score ; result is in lowest score
     mov ecx, dword [lowest_score]

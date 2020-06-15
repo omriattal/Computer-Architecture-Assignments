@@ -9,6 +9,8 @@ section .text:
     global init_target
     global target_func
     extern position_gen
+    extern resume
+    extern curr
     extern position_res
 
 %macro init_func 1
@@ -37,5 +39,4 @@ init_target:
     end_func 0
 
 target_func:
-    init_func 0
-    end_func 0
+    call init_target
