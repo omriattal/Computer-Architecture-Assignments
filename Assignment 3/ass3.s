@@ -9,6 +9,7 @@ section .data
     global number_of_drones
     global scheduler_co
     global printer_co
+    global target_co
     global number_of_scheduler_cycles
     global number_of_printer_cycles
     global maximum_distance

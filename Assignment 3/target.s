@@ -4,6 +4,10 @@ section .bss
     target_x: resd 1
     target_y: resd 1
 
+section .data
+    extern curr_drone
+    extern cors
+    extern target_co
 
 section .text:
     global init_target
@@ -40,3 +44,10 @@ init_target:
 
 target_func:
     call init_target
+    mov eax, dword [cors]
+    mov ecx, dword [curr_drone]
+    mov ebx, dword [eax+4*ecx] ; getting ready to resume current drone
+    call resume
+    jmp target_func
+
+

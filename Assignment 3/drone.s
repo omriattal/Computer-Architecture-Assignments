@@ -23,6 +23,8 @@ section .text:
     extern angle_res
     extern angle_gen
     extern scheduler_co
+    extern target_co
+    
 %macro print 2
     pushfd
     pushad
@@ -79,6 +81,8 @@ init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the pt
 drone_func:
     print format_string,hello
     print format_integer, [curr_drone]
+    mov ebx,target_co ; call create a target
+    call resume
     mov ebx, scheduler_co ; the current co-routine
     call resume
     jmp drone_func
