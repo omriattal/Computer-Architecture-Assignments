@@ -13,11 +13,17 @@ section .data
     active_res: dd 0
     mod_res: dd 0
     drone_location: dd 0
+    eliminate_msg: db 10,"ELIMINATED DRONE: ",0
+    round_msg: db 10,"ROUND: ",0
+    winner_winner_chicken_dinner: db 10,"---- WINNER WINNER CHICKEN DINNER! ----",10,"THE WINNER IS - ",0
+    format_string: db "%s",0
+    format_integer: db "%d",10,0
 section .text
     global scheduler_func
     extern cors
     extern resume
     extern sp_main
+    extern printf
     extern drones
     extern number_of_scheduler_cycles
     extern number_of_printer_cycles
@@ -39,6 +45,16 @@ section .text
     add esp, %1
     pop ebp
     ret
+%endmacro
+%macro print 2
+    pushfd
+    pushad
+    push dword %2
+    push dword %1
+    call printf
+    add esp,8
+    popad
+    popfd
 %endmacro
 ;receives an index to the drone
 %macro is_active 1  
@@ -90,7 +106,6 @@ section .text
     popfd
     popad
 %endmacro
-
 %macro divide 2 
     pushad
     pushfd
@@ -110,6 +125,8 @@ scheduler_func:
     round_robin:
         cmp dword [amount_of_actives],1 ; only one active
         je finish
+        print format_string,round_msg
+        print format_integer,edx
         mod edx,dword [number_of_drones] ; result is in modres
         mov ecx, dword [mod_res] ; store the result in ecx. ecx = i%N
         is_active ecx ; result is in active_res
@@ -132,6 +149,8 @@ scheduler_func:
                 call resume
 
         check_elimination:
+            cmp edx,0 ; the index equals to 0 - not eliminating
+            je cont
             mod edx, dword [number_of_drones]
             mov ecx, dword [mod_res] ; ecx = i%N
             cmp ecx,0
@@ -149,6 +168,9 @@ scheduler_func:
         jmp round_robin
     
     finish:
+        call print_winner
+        mov ebx,printer_co ; print the board one last time
+        call resume
         jmp end_co
 
 find_lowest_score:
@@ -189,6 +211,8 @@ eliminate:
         cmp ebx,dword [lowest_score]
         jg .cont ; ebx has a greater score
         get_drone_loc ecx ; result is in drone location
+        print format_string,eliminate_msg
+        print format_integer,ecx
         mov ebx,dword [drone_location]
         mov dword [eax+ebx+STATUS],0 ; deactivate drone
         jmp .finish ; no need to continue    
@@ -197,4 +221,23 @@ eliminate:
             jmp .loop
     .finish:
         end_func 0
+
+print_winner:
+    init_func 0
+    mov ecx,0 ; he index
+    .loop:
+        cmp ecx, dword [number_of_drones]
+        je .finish
+        is_active ecx ; result is in active_res
+        cmp dword [active_res],1
+        jne .cont
+        print format_string,winner_winner_chicken_dinner
+        print format_integer,ecx
+        je .finish
+        .cont:
+            inc ecx
+            jmp .loop
+    .finish:
+        end_func 0
+
 

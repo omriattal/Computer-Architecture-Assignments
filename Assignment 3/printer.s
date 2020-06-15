@@ -97,9 +97,7 @@ print_drones:
     .main_loop:
         cmp ecx,dword [number_of_drones]
         je .finish_looping
-        inc ecx 
         print format_integer,ecx
-        dec ecx
         print format_string,comma_msg
         print_float dword [ebx+X]
         print format_string,comma_msg
