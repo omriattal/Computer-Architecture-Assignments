@@ -15,7 +15,7 @@ section .data
     global maximum_distance
     format_string: db "%s",0
     format_integer: db "%d",10,0
-    format_float: db "%.2f",0
+    format_float: db "%.2f",10,0
     format_float_regular: db "%f",0
     format_hexa: db "%X",10,
     not_enough_args: db "not enough args,exiting",10,0
@@ -24,6 +24,10 @@ section .data
     MAX_SHORT: dd 0xFFFF
     THREE_SIXTY: dd 360
     ONE_EIGHTY: dd 180
+    ONE_TWENTY: dd 120
+    SIXTY: dd 60
+    TWENTY: dd 20
+    TEN: dd 10
     seed: dd 0 ; seed is a word
     number_of_drones: dd 0
     number_of_scheduler_cycles: dd 0
@@ -40,8 +44,12 @@ section .bss
     global curr
     global cors
     global sp_main
+    global delta_alpha_res
+    global delta_speed_res
     position_res: resd 1
     angle_res: resd 1
+    delta_alpha_res: resd 1
+    delta_speed_res: resd 1
     arg_temp: resd 1
     drones: resd 1
     curr: resd 1
@@ -149,7 +157,8 @@ section .text
   global resume
   global end_co
   global do_resume
-
+  global delta_alpha_gen
+  global delta_speed_gen
   extern printf
   extern init_drone
   extern init_target
@@ -306,25 +315,40 @@ position_gen:
     init_func 0
     call random_word ; now seed has the right number we'll use
     fild dword [seed]
-    fdiv dword [MAX_SHORT]
-    fmul dword [BOARD_SIZE]
+    fidiv dword [MAX_SHORT]
+    fimul dword [BOARD_SIZE]
     fstp dword [position_res] ; position_res will hold the result of the operation
     end_func 0
 angle_gen:
-
     init_func 0
     call random_word ; now seed has the right number we'll use
     fild dword [seed]
-    fdiv dword [MAX_SHORT]
-    fmul dword [THREE_SIXTY] 
+    fidiv dword [MAX_SHORT]
+    fimul dword [THREE_SIXTY] 
     fldpi
     fmulp
     fidiv dword [ONE_EIGHTY]
     fstp dword [angle_res] ; angle_res will hold the result of the operation
     end_func 0
-
-
-
+delta_alpha_gen:
+    init_func 0
+    call random_word ; now seed has the right number we'll use
+    after:
+    fild dword [seed]
+    fidiv dword [MAX_SHORT]
+    fimul dword [ONE_TWENTY]
+    fisub dword [SIXTY]
+    fstp dword [delta_alpha_res] ; position_res will hold the result of the operation
+    end_func 0
+delta_speed_gen:
+    init_func 0
+    call random_word
+    fild dword [seed]
+    fidiv dword [MAX_SHORT]
+    fimul dword [TWENTY] ; make it [0,20]
+    fisub dword [TEN] ; make it [-10,10]
+    fstp dword [delta_speed_res] ; position_res will hold the result of the operation
+    end_func 0
 
 
 
