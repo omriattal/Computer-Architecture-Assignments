@@ -314,13 +314,16 @@ random_word:
 position_gen:
     init_func 0
     call random_word ; now seed has the right number we'll use
+    finit
     fild dword [seed]
     fidiv dword [MAX_SHORT]
     fimul dword [BOARD_SIZE]
     fstp dword [position_res] ; position_res will hold the result of the operation
+    ffree
     end_func 0
 angle_gen:
     init_func 0
+    finit
     call random_word ; now seed has the right number we'll use
     fild dword [seed]
     fidiv dword [MAX_SHORT]
@@ -329,25 +332,32 @@ angle_gen:
     fmulp
     fidiv dword [ONE_EIGHTY]
     fstp dword [angle_res] ; angle_res will hold the result of the operation
+    ffree
     end_func 0
 delta_alpha_gen:
     init_func 0
     call random_word ; now seed has the right number we'll use
-    after:
+    finit
     fild dword [seed]
     fidiv dword [MAX_SHORT]
     fimul dword [ONE_TWENTY]
     fisub dword [SIXTY]
-    fstp dword [delta_alpha_res] ; position_res will hold the result of the operation
+    fldpi
+    fmulp
+    fidiv dword [ONE_EIGHTY]
+    fstp dword [delta_alpha_res] ; dela_alpha_res will hold the result of the operation
+    ffree
     end_func 0
 delta_speed_gen:
     init_func 0
+    finit
     call random_word
     fild dword [seed]
     fidiv dword [MAX_SHORT]
     fimul dword [TWENTY] ; make it [0,20]
     fisub dword [TEN] ; make it [-10,10]
     fstp dword [delta_speed_res] ; position_res will hold the result of the operation
+    ffree
     end_func 0
 
 

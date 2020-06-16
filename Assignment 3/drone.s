@@ -5,7 +5,6 @@ section .data
     SPEED: equ 12
     SCORE: equ 16
     STATUS: equ 20 ; dword
-    ZERO: dd 0.0
     DRONE_SIZE: equ 24
     format_string: db "%s",0
     format_integer: db "%d",10,0
@@ -16,6 +15,13 @@ section .data
     can_destroy: db 0
     delta_x: dd 0
     delta_y: dd 0
+    ONE_HUNDRED: dd 100
+    MINUS_ONE_HUNDRED: dd 0
+    THREE_SIXTY: dd 360
+    ZERO: dd 0
+    SIXTY: dd 60
+    TWO: dd 0
+    MINUS_SIXTY: dd 60
 section .bss
     garbage: resd 1
 section .text
@@ -119,23 +125,26 @@ init_drone: ; receives a pointer to where to plant the drone. ebp+8 holds the pt
     
 
 drone_func:
-    print format_string,hello
-    print format_integer,[curr_drone]
-    call may_destroy ; result is in can drone
-    cmp byte [can_destroy],0
-    je .resume_scheduer
-    call destroy ; inc score and initiate new target
-    .resume_scheduer:
-    mov ebx, scheduler_co ; the current co-routine
-    call resume
-    jmp drone_func
+    call move_drone
+    .main_loop:
+        call may_destroy ; result is in can drone
+        cmp byte [can_destroy],0
+        jne .destroy
+        jmp .resume_scheduer
+        .destroy:
+            call destroy ; inc score and initiate new target
+        .resume_scheduer:
+            call move_drone
+            mov ebx, scheduler_co ; the current co-routine
+            call resume
+    jmp .main_loop
 
 may_destroy:
     init_func 0
     mov eax, dword [drones] ; the drones array
     get_drone_loc dword [curr_drone] ; will output the exact location in the array in drone location
     mov ebx, dword [drone_location]
-    
+    finit
     fld dword [eax+ebx+X] ; load current x
     fld dword [target_x] ;load target x
     fsubp
@@ -164,6 +173,7 @@ may_destroy:
     not_in_range:
         mov byte [can_destroy],0
     cont:
+        ffree
         end_func 0
 
 destroy:
@@ -177,5 +187,125 @@ destroy:
     call resume
     end_func 0
 
+move_drone:
+    init_func 0
+    call delta_alpha_gen ; result is in delta elpha res
+    call delta_speed_gen ; result is in delta speed res
+    mov eax, dword [drones]
+    get_drone_loc dword [curr_drone]
+    mov ebx, dword [drone_location] ; ebx stores the exact drone location
+    finit
+    compute_deltas:
+        fld dword [eax+ebx+ANGLE]
+        fsin ; sin(currangle)
+        fld dword [eax+ebx+SPEED]
+        fmulp
+        fstp dword [delta_y]
+        fld dword [eax+ebx+ANGLE]
+        fcos ; cos(currangle)
+        fld dword [eax+ebx+SPEED]
+        fmulp
+        fstp dword [delta_x]
 
+    move_x:
+        fld dword [eax+ebx+X]
+        fld dword [delta_x]
+        faddp ; adds the current x loc with delta x
+        fild dword [ONE_HUNDRED]
+        fcomip
+        jb .wraparoundtop
+        fild dword [ZERO]
+        fcomip
+        ja .wraparoundbottom
+        jmp .regular_x
+
+        .wraparoundtop:
+            fisub dword [ONE_HUNDRED]
+            fstp dword [eax+ebx+X]
+            jmp move_y
+
+        .wraparoundbottom:
+            fiadd dword [ONE_HUNDRED]
+            fstp dword [eax+ebx+X]
+            jmp move_y
+        .regular_x:
+        fstp dword [eax+ebx+X]
+
+    move_y:
+        fld dword [eax+ebx+Y]
+        fld dword [delta_y]
+        faddp ; adds the current x loc with delta x
+        fild dword [ONE_HUNDRED]
+        fcomip
+        jb .wraparoundtop
+        fild dword [ZERO]
+        fcomip
+        ja .wraparoundbottom
+        jmp .regular_y
+        .wraparoundtop:
+            fisub dword [ONE_HUNDRED]
+            fstp dword [eax+ebx+Y]
+            jmp change_angle
+            
+        .wraparoundbottom:
+            fiadd dword [ONE_HUNDRED]
+            fstp dword [eax+ebx+Y]
+            jmp change_angle
+            
+        .regular_y:
+        fstp dword [eax+ebx+Y]
+
+    change_angle:
+        fld dword [eax+ebx+ANGLE]
+        fld dword [delta_alpha_res]
+        faddp
+        fldpi
+        fimul dword [TWO]
+        fcomip
+        jb .wraparoundtop
+        fild dword [ZERO]
+        fcomip
+        ja .wraparoundbottom
+        jmp .regular_angle
+        .wraparoundtop:
+            fldpi
+            fimul dword [TWO]
+            fsubp; subtracts 2pi from st1 - the angle
+            fstp dword [eax+ebx+ANGLE]
+            jmp change_speed
+        .wraparoundbottom:
+            fldpi
+            fimul dword [TWO]
+            faddp  ; subtracts 2pi from st1 - the angle
+            fstp dword [eax+ebx+ANGLE]
+            jmp change_speed
+        .regular_angle:
+        fstp dword [eax+ebx+ANGLE]
+
+    change_speed:
+        fld dword [eax+ebx+SPEED]
+        fld dword [delta_speed_res]
+        faddp
+        fild dword [ONE_HUNDRED]
+        fcomip
+        jb .wraparoundtop
+        fild dword [ZERO]
+        fcomip
+        ja .wraparoundbottom
+        jmp .regular_speed
+        .wraparoundtop:
+            fisub dword [ONE_HUNDRED]
+            fstp dword [eax+ebx+SPEED]
+            jmp finish
+        .wraparoundbottom:
+            fiadd dword [ONE_HUNDRED]
+            fstp dword [eax+ebx+SPEED]
+            jmp finish
+
+        .regular_speed:
+        fstp dword [eax+ebx+SPEED]
+
+    finish:
+        ffree
+        end_func 0
 
