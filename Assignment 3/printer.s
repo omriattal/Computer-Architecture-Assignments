@@ -11,10 +11,10 @@ section .data
     format_integer: db "%d",0
     active_msg: db "ACTIVE",0
     inactive_msg: db "INACTIVE",0
-    ;TODO: DELETE THE SPACE HERE
     comma_msg: db ", ",0
     newline_msg: db 10,0
-
+    angle_maalot: dd 0
+    ONE_EIGHTY: dd 180
 section .text
     global print_drones
     global printer_func
@@ -105,7 +105,12 @@ print_drones:
         print format_string,comma_msg
         print_float dword [ebx+Y]
         print format_string,comma_msg
-        print_float dword [ebx+ANGLE]
+        fld dword [ebx+ANGLE]
+        fldpi
+        fdivp
+        fimul dword [ONE_EIGHTY]
+        fstp dword [angle_maalot]
+        print_float dword [angle_maalot]
         print format_string,comma_msg
         print_float dword [ebx+SPEED]
         print format_string,comma_msg

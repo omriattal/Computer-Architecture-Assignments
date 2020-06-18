@@ -20,7 +20,7 @@ section .data
     THREE_SIXTY: dd 360
     ZERO: dd 0
     SIXTY: dd 60
-    TWO: dd 0
+    TWO: dd 2
     MINUS_SIXTY: dd 60
 section .bss
     garbage: resd 1
@@ -261,7 +261,7 @@ move_drone:
         faddp
         fldpi
         fimul dword [TWO]
-        fcomip
+        fcomip ; compares with 2pi = 360
         jb .wraparoundtop
         fild dword [ZERO]
         fcomip

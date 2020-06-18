@@ -2,7 +2,6 @@ STACKSZ equ 16*1024
 FUNC equ 0
 STACK equ 4
 DRONE_SIZE equ 24
-
 section .data
     global angle_res
     global position_res
@@ -171,6 +170,8 @@ section .text
   extern scheduler_func
   extern target_func
 
+
+; TODO: FREE MEMORY
 main: ; the main function
     init_func 0
     push dword [ebp+12]
