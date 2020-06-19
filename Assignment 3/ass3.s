@@ -1,7 +1,9 @@
 STACKSZ equ 16*1024
 FUNC equ 0
 STACK equ 4
+STACK_BEGIN equ 8
 DRONE_SIZE equ 24
+COR_SIZE equ 12
 section .data
     global angle_res
     global position_res
@@ -149,6 +151,15 @@ section .text
     popfd
     popad
 %endmacro
+%macro free_ptr 1
+    pushad
+    pushfd
+    push dword %1
+    call free
+    add esp,4
+    popfd
+    popad
+%endmacro
   global main
   global random_words
   global position_gen
@@ -170,8 +181,6 @@ section .text
   extern scheduler_func
   extern target_func
 
-
-; TODO: FREE MEMORY
 main: ; the main function
     init_func 0
     push dword [ebp+12]
@@ -191,6 +200,8 @@ main: ; the main function
         mov esp, [sp_main]
         popfd
         popad
+    
+    call free_all_memory
     end_func 0
     
 init_args:
@@ -202,6 +213,24 @@ init_args:
     read_arg [ecx+16],format_float_regular,maximum_distance
     read_arg [ecx+20],format_integer,seed
     end_func 0
+
+free_all_memory:
+    init_func 4
+    free_ptr [drones] ; will free the drones
+    mov edx,0
+    mov eax, dword [cors] ; will be the cors array. holds a ptr
+    main_loop:
+        cmp edx, dword [number_of_drones]
+        je finish
+        mov ecx, dword [eax+4*edx] ; ecx= co-routine
+        mov ebx, dword [ecx+STACK_BEGIN]
+        free_ptr ebx
+        free_ptr [eax+4*edx]
+        inc edx
+        jmp main_loop
+    finish:
+    free_ptr eax
+    end_func 4
 
 init_drones:
     init_func 0
@@ -228,12 +257,13 @@ create_drone_cors:
     .loop:
         cmp edx, dword [number_of_drones]
         je .finish_initialize
-        allocate 8,cor_tmp
+        allocate COR_SIZE,cor_tmp
         mov ebx, dword [cor_tmp] ; ebx holds the current co-routine
         mov dword [eax+4*edx],ebx ; plant the co-routine in the array
         mov dword [ebx+FUNC],drone_func ; set the function to drone_func
         allocate STACKSZ,stack_tmp ; stack is in curr stack
-        mov ecx, dword [stack_tmp] ; ecx is the stack tmp
+        mov ecx, dword [stack_tmp] ; ecx is the stack 
+        mov dword [ebx+STACK_BEGIN],ecx ; assign the base ptr of the stack to ebx+8
         add ecx,STACKSZ ; make ecx the top of the stack
         mov dword [ebx+STACK],ecx ; assign stack ptr
         inc edx

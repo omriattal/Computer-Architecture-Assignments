@@ -2,10 +2,10 @@
 #{-tab-}actions
 
 # All Targets
-all: game
+all: ass3
 
-game: ass3.o printer.o drone.o scheduler.o target.o
-	gcc -m32 -Wall -g ass3.o printer.o drone.o scheduler.o target.o -o game
+ass3: ass3.o printer.o drone.o scheduler.o target.o
+	gcc -m32 -Wall -g ass3.o printer.o drone.o scheduler.o target.o -o ass3
 
 ass3.o: ass3.s
 	nasm -f elf ass3.s -o ass3.o
@@ -22,4 +22,4 @@ target.o: target.s
 
 #Clean the build directory
 clean: 
-	rm -f *.o game
+	rm -f *.o ass3
