@@ -182,7 +182,9 @@ destroy:
     get_drone_loc dword [curr_drone] ; will output the exact location in the array in drone location
     mov ebx, dword [drone_location]
     inc dword [eax+ebx+SCORE] ; load current x
+    inc dword [curr_drone]
     print format_destroy,[curr_drone]
+    dec dword [curr_drone]
     mov ebx,target_co ; new target
     call resume
     end_func 0

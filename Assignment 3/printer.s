@@ -14,6 +14,10 @@ section .data
     comma_msg: db ", ",0
     newline_msg: db 10,0
     angle_maalot: dd 0
+    coordinates_msg: db "COORDINATES: ",0
+    angle_msg: db "ANGLE: ",0
+    speed_msg: db "SPEED: ",0
+    score_msg: db "SCORE: ",0
     ONE_EIGHTY: dd 180
 section .text
     global print_drones
@@ -99,12 +103,16 @@ print_drones:
     .main_loop:
         cmp ecx,dword [number_of_drones]
         je .finish_looping
+        inc ecx
         print format_integer,ecx
+        dec ecx
         print format_string,comma_msg
+        print format_string,coordinates_msg
         print_float dword [ebx+X]
         print format_string,comma_msg
         print_float dword [ebx+Y]
         print format_string,comma_msg
+        print format_string,angle_msg
         fld dword [ebx+ANGLE]
         fldpi
         fdivp
@@ -112,8 +120,10 @@ print_drones:
         fstp dword [angle_maalot]
         print_float dword [angle_maalot]
         print format_string,comma_msg
+        print format_string,speed_msg
         print_float dword [ebx+SPEED]
         print format_string,comma_msg
+        print format_string,score_msg
         print format_integer,[ebx+SCORE]
         print format_string,comma_msg
         cmp dword [ebx+STATUS],1

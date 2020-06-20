@@ -243,8 +243,10 @@ print_winner:
         cmp dword [active_res],1
         jne .cont
         print format_string,winner_winner_chicken_dinner
+        inc ecx
         print format_integer,ecx
-        je .finish
+        dec ecx
+        jmp .finish
         .cont:
             inc ecx
             jmp .loop
