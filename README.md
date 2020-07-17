@@ -1,6 +1,6 @@
 # Computer-Architecture-Assignments
-The Assignments of the course Computer Architecture in Ben-Gurion University, Israel
-All of the assignments are written in assembly language. Some code of C may be involved though.
+The Assignments of the course Computer Architecture in Ben-Gurion University, Israel.
+All of the assignments are written in assembly language in Linux OS. Some code of C may be involved though.
 
 #### [Assignment 0 - Basic Program](https://www.cs.bgu.ac.il/~caspl202/Assignments/Assignment_0)
 #### [Assignment 1 - String to Hexadecimal Convertor](https://www.cs.bgu.ac.il/~caspl202/Assignments/Assignment_1)
